@@ -57,4 +57,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+
+    // Fase 2: íconos de Material (la versión la pone el BOM de Compose)
+    implementation("androidx.compose.material:material-icons-core")
 }
