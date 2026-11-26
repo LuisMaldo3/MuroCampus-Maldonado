@@ -69,6 +69,17 @@ fun AppMuroCampus(vm: PostsViewModel) {
     // Botón Atrás del sistema: vuelve a la lista
     BackHandler(enabled = idSeleccionado != null || creando, onBack = volver)
 
+    // Mensajes cortos que manda el ViewModel (por ejemplo, "Publicación #3 eliminada")
+    val snackbar = remember { SnackbarHostState() }
+    val mensaje by vm.mensaje.collectAsStateWithLifecycle()
+    LaunchedEffect(mensaje) {
+        val m = mensaje
+        if (m != null) {
+            snackbar.showSnackbar(m)
+            vm.mensajeMostrado()
+        }
+    }
+
     val id = idSeleccionado
     val pantalla = when {
         creando -> "crear"
@@ -101,6 +112,7 @@ fun AppMuroCampus(vm: PostsViewModel) {
                 )
             }
         },
+        snackbarHost = { SnackbarHost(snackbar) },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Crossfade(targetState = pantalla, label = "pantallas", modifier = Modifier.padding(padding)) { p ->
@@ -109,6 +121,7 @@ fun AppMuroCampus(vm: PostsViewModel) {
                 p.startsWith("detalle:") -> PantallaDetalle(
                     vm = vm,
                     id = p.removePrefix("detalle:").toInt(),
+                    onBorrado = volver,
                 )
                 else -> PantallaLista(vm, onAbrir = { idSeleccionado = it })
             }

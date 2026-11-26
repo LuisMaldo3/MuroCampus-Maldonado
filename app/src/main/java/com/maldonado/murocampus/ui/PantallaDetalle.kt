@@ -48,10 +48,22 @@ import com.maldonado.murocampus.viewmodel.UiState
 fun PantallaDetalle(
     vm: PostsViewModel,
     id: Int,
+    onBorrado: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LaunchedEffect(id) { vm.abrir(id) }
     val estado by vm.detalle.collectAsStateWithLifecycle()
+    val borrado by vm.borrado.collectAsStateWithLifecycle()
+    var confirmar by remember { mutableStateOf(false) }
+
+    // Cuando el servidor confirma el borrado, vuelve a la lista
+    LaunchedEffect(borrado) {
+        val b = borrado
+        if (b is UiState.Exito && b.datos == id) {
+            vm.reiniciarBorrado()
+            onBorrado()
+        }
+    }
 
     Box(modifier.fillMaxSize()) {
         when (val e = estado) {
@@ -97,6 +109,29 @@ fun PantallaDetalle(
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                                 )
+                                val borrando = borrado is UiState.Cargando
+                                OutlinedButton(
+                                    onClick = { confirmar = true },
+                                    enabled = !borrando,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(14.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(if (borrando) "Eliminando…" else "Eliminar publicación")
+                                }
+                                val errorBorrado = borrado
+                                if (errorBorrado is UiState.Error) {
+                                    Text(
+                                        errorBorrado.mensaje,
+                                        color = MaterialTheme.colorScheme.error,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
                             }
                         }
                     }
@@ -137,5 +172,25 @@ fun PantallaDetalle(
                 }
             }
         }
+    }
+
+    if (confirmar) {
+        AlertDialog(
+            onDismissRequest = { confirmar = false },
+            icon = { Icon(Icons.Default.Delete, contentDescription = null) },
+            title = { Text("¿Eliminar publicación?") },
+            text = { Text("Se enviará DELETE posts/$id al servidor. Esta acción no se puede deshacer.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmar = false
+                    vm.borrar(id)
+                }) {
+                    Text("Eliminar", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmar = false }) { Text("Cancelar") }
+            }
+        )
     }
 }
