@@ -50,10 +50,12 @@ fun PantallaLista(
     onAbrir: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val estado by vm.lista.collectAsStateWithLifecycle()
+    val estado by vm.listaVisible.collectAsStateWithLifecycle()
+    val busqueda by vm.busqueda.collectAsStateWithLifecycle()
     val filtro by vm.usuarioFiltro.collectAsStateWithLifecycle()
 
     Column(modifier.fillMaxSize()) {
+        CampoBusqueda(texto = busqueda, onCambio = { vm.buscar(it) })
         FilaFiltros(seleccionado = filtro, onElegir = { vm.filtrar(it) })
 
         Crossfade(targetState = estado, label = "estadoLista", modifier = Modifier.weight(1f)) { e ->
@@ -62,7 +64,14 @@ fun PantallaLista(
                 is UiState.Error -> ErrorConReintento(e.mensaje, onReintentar = { vm.cargar() })
                 is UiState.Exito -> {
                     if (e.datos.isEmpty()) {
-                        EstadoVacio("Sin publicaciones", "Este usuario todavía no ha publicado.")
+                        if (busqueda.isNotBlank()) {
+                            EstadoVacio(
+                                "Sin resultados",
+                                "Ninguna publicación tiene «${busqueda.trim()}» en el título."
+                            )
+                        } else {
+                            EstadoVacio("Sin publicaciones", "Este usuario todavía no ha publicado.")
+                        }
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp),

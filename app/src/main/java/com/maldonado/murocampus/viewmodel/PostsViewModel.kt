@@ -26,6 +26,14 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     private val _lista = MutableStateFlow<UiState<List<Post>>>(UiState.Cargando)
     val lista: StateFlow<UiState<List<Post>>> = _lista.asStateFlow()
 
+    // ---------- Fase 2: búsqueda por título sobre lo ya descargado ----------
+    private val _busqueda = MutableStateFlow("")
+    val busqueda: StateFlow<String> = _busqueda.asStateFlow()
+
+    val listaVisible: StateFlow<UiState<List<Post>>> =
+        combine(_lista, _busqueda) { estado, texto -> aplicarBusqueda(estado, texto) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Cargando)
+
     // ---------- Paso 8: filtro (null = Todos) ----------
     private val _usuarioFiltro = MutableStateFlow<Int?>(null)
     val usuarioFiltro: StateFlow<Int?> = _usuarioFiltro.asStateFlow()
@@ -136,5 +144,15 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
 
     fun mensajeMostrado() {
         _mensaje.value = null
+    }
+
+    fun buscar(texto: String) {
+        _busqueda.value = texto
+    }
+
+    private fun aplicarBusqueda(estado: UiState<List<Post>>, texto: String): UiState<List<Post>> {
+        val q = texto.trim()
+        if (q.isEmpty() || estado !is UiState.Exito) return estado
+        return UiState.Exito(estado.datos.filter { it.title.contains(q, ignoreCase = true) })
     }
 }
