@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.maldonado.murocampus.data.PostRepository
 import com.maldonado.murocampus.model.Comentario
+import com.maldonado.murocampus.model.NuevoPost
 import com.maldonado.murocampus.model.Post
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -29,6 +30,10 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     // ---------- Paso 7: detalle ----------
     private val _detalle = MutableStateFlow<UiState<DetalleUi>>(UiState.Cargando)
     val detalle: StateFlow<UiState<DetalleUi>> = _detalle.asStateFlow()
+
+    // ---------- Paso 9: crear (null = aún no se envió) ----------
+    private val _envio = MutableStateFlow<UiState<Post>?>(null)
+    val envio: StateFlow<UiState<Post>?> = _envio.asStateFlow()
 
     private var trabajoLista: Job? = null
     private var trabajoDetalle: Job? = null
@@ -78,5 +83,19 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
             }
             _detalle.value = UiState.Exito(DetalleUi(post, comentarios))
         }
+    }
+
+    fun publicar(titulo: String, texto: String) {
+        if (_envio.value is UiState.Cargando) return
+        _envio.value = UiState.Cargando
+        viewModelScope.launch {
+            repo.crear(NuevoPost(userId = 1, title = titulo.trim(), body = texto.trim()))
+                .onSuccess { _envio.value = UiState.Exito(it) }
+                .onFailure { _envio.value = UiState.Error(mensajeDe(it)) }
+        }
+    }
+
+    fun reiniciarEnvio() {
+        _envio.value = null
     }
 }
