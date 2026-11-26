@@ -52,6 +52,31 @@ com.maldonado.murocampus/
 |---|---|---|---|---|
 | ![](capturas/lista.png) | ![](capturas/detalle.png) | ![](capturas/filtro.png) | ![](capturas/crear.png) | ![](capturas/error.png) |
 
+## Fase 2 · Mejoras con IA (rama `mejora-ia`)
+
+Mejoras hechas con ayuda de Gemini en Android Studio, sin romper MVVM + Repository.
+Los prompts usados y lo que cambié de cada respuesta están en [PROMPTS.md](PROMPTS.md).
+
+| Mejora | Qué logra | Capas que cambian |
+|---|---|---|
+| Encabezado con interceptor | Un `Interceptor` de OkHttp agrega `Accept: application/json` a todas las peticiones; se ve en Logcat | RetrofitClient |
+| Rediseño profesional | Encabezado con degradado, avatares y colores por usuario, tarjetas con borde fino, carga con tarjetas "fantasma", estados vacío y error con ícono, transiciones suaves entre pantallas | View (`ui/`, `theme/`) |
+| Borrar publicación | Botón Eliminar en el detalle con diálogo de confirmación; `@DELETE("posts/{id}")` devuelve `Response<Unit>` y el Repository revisa `isSuccessful`; aviso con Snackbar | API + Repository + ViewModel + View |
+| Búsqueda | Campo que filtra por título las publicaciones ya descargadas, combinado con el filtro por usuario | ViewModel + View |
+
+**Notas**
+- JSONPlaceholder responde 200 al `DELETE` pero no borra nada; por eso la app quita la
+  publicación de la lista local. Si recargas, vuelve a aparecer.
+- El ViewModel sigue sin Retrofit, `PostApi` ni `HttpException`: el 404 del `DELETE` se
+  convierte en excepción dentro del Repository y llega como `Result.failure`.
+- La búsqueda no hace peticiones: combina con `combine` la lista y el texto escrito.
+
+### Capturas de la Fase 2
+
+| Lista con búsqueda y chips | Detalle con Eliminar | Crear | Sin conexión |
+|---|---|---|---|
+| ![](capturas/f2-lista.png) | ![](capturas/f2-detalle.png) | ![](capturas/f2-crear.png) | ![](capturas/f2-error.png) |
+
 ## Para pensar
 
 **1. ¿Qué diferencia hay entre GET y POST? ¿Por qué crear lleva @Body y porUsuario lleva @Query?**
