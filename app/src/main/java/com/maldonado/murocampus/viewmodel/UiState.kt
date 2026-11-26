@@ -1,3 +1,19 @@
 package com.maldonado.murocampus.viewmodel
 
-// [E] Se completa en el Paso 6 (necesita Retrofit y kotlinx.serialization del Paso 1).
+import kotlinx.serialization.SerializationException
+import retrofit2.HttpException
+import java.io.IOException
+
+// [E] Así llega del proyecto base
+sealed interface UiState<out T> {
+    data object Cargando : UiState<Nothing>
+    data class Exito<T>(val datos: T) : UiState<T>
+    data class Error(val mensaje: String) : UiState<Nothing>
+}
+
+fun mensajeDe(e: Throwable): String = when (e) {
+    is IOException -> "Sin conexión a internet.\nRevisa tu red e inténtalo otra vez."
+    is HttpException -> "Error del servidor (${e.code()})"
+    is SerializationException -> "Respuesta inesperada"
+    else -> "Error desconocido"
+}
